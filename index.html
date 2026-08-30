@@ -843,10 +843,12 @@ function reportHTML(){
  .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:6px}
  .kv div{border-bottom:1px solid #EFEDE8;padding:5px 0;font-size:13.5px}
  .kv b{color:#7A828A;font-weight:600;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;display:block}
- .gal{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 4px}
- figure{margin:0;width:150px}
- figure img{width:150px;height:150px;object-fit:cover;border:1px solid #E1DDD5;border-radius:5px;display:block}
- figcaption{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#7A828A;margin-top:3px}
+ .gal{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:12px 0 6px}
+ figure{margin:0}
+ figure img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;
+   border:1px solid #E1DDD5;border-radius:5px;display:block}
+ figcaption{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#7A828A;margin-top:4px}
+ @media (max-width:560px){.gal{grid-template-columns:repeat(2,1fr)}}
  .sigs{display:flex;gap:22px;margin-top:10px;flex-wrap:wrap}
  .sg{flex:1;min-width:230px}
  .sl{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:#7A828A;font-weight:600;margin-bottom:5px}
