@@ -1,0 +1,890 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>État des lieux</title>
+<style>
+  :root{
+    --ink:#15181C;
+    --ink2:#525A63;
+    --ink3:#8A9299;
+    --paper:#F4F3EF;
+    --card:#FFFFFF;
+    --rule:#E1DDD5;
+    --nav:#1E2C3A;
+    --nav2:#2B3E51;
+    --bon:#2F7A57;
+    --moyen:#B0761A;
+    --mauvais:#A93A29;
+    --focus:#2E6FB7;
+    --radius:10px;
+    --pad:16px;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--ui);
+    background:var(--paper);
+    color:var(--ink);
+    font-size:16px;
+    line-height:1.45;
+    padding-bottom:96px;
+  }
+  button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+  button{cursor:pointer;border:none;background:none}
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky;top:0;z-index:40;
+    background:var(--nav);color:#fff;
+    padding:calc(env(safe-area-inset-top) + 10px) var(--pad) 0;
+  }
+  .hrow{display:flex;align-items:baseline;gap:10px;justify-content:space-between}
+  .htitle{
+    font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+    font-family:var(--mono);color:#9FB3C6;
+  }
+  .haddr{
+    font-size:17px;font-weight:600;margin:2px 0 0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .haddr.empty{color:#7E93A6;font-weight:400}
+  .badge{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    padding:4px 9px;border-radius:999px;white-space:nowrap;
+  }
+  .badge.entree{background:#37506A;color:#CFE1F2}
+  .badge.sortie{background:#6A4A20;color:#F5DCB4}
+  .saved{
+    font-family:var(--mono);font-size:11px;color:#7E93A6;height:16px;
+    margin:4px 0 8px;
+  }
+  nav{
+    display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;
+    margin:0 calc(var(--pad) * -1);padding:0 var(--pad);
+  }
+  nav::-webkit-scrollbar{display:none}
+  .tab{
+    flex:0 0 auto;padding:10px 13px 11px;color:#93A8BB;
+    font-size:14px;font-weight:500;border-bottom:3px solid transparent;
+    display:flex;align-items:center;gap:7px;
+  }
+  .tab[aria-selected="true"]{color:#fff;border-bottom-color:#E8B450}
+  .dot{width:7px;height:7px;border-radius:50%;background:#4A6076;flex:0 0 auto}
+  .tab[data-done="1"] .dot{background:#5FBF8E}
+
+  /* ---------- layout ---------- */
+  main{padding:var(--pad);max-width:760px;margin:0 auto}
+  .panel{display:none}
+  .panel.on{display:block;animation:fade .18s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.panel.on{animation:none}}
+
+  h2{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    font-family:var(--mono);color:var(--ink3);
+    margin:0 0 10px;font-weight:600;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--rule);
+    border-radius:var(--radius);padding:14px;margin-bottom:12px;
+  }
+  label.f{display:block;margin-bottom:12px}
+  label.f:last-child{margin-bottom:0}
+  .lab{
+    display:block;font-size:12px;font-weight:600;color:var(--ink2);
+    margin-bottom:5px;letter-spacing:.01em;
+  }
+  input[type=text],input[type=date],input[type=number],textarea,select{
+    width:100%;padding:11px 12px;border:1px solid var(--rule);
+    border-radius:8px;background:#FCFCFB;
+  }
+  input[type=number],.mono{font-family:var(--mono)}
+  textarea{resize:vertical;min-height:64px}
+  input:focus,textarea:focus,select:focus{
+    outline:2px solid var(--focus);outline-offset:1px;border-color:transparent;
+  }
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:420px){.grid2{grid-template-columns:1fr}}
+
+  /* ---------- element row : the signature control ---------- */
+  .el{border-top:1px solid var(--rule);padding:13px 0}
+  .el:first-of-type{border-top:none;padding-top:2px}
+  .elhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .elname{font-weight:600;font-size:15px}
+  .seg{display:flex;gap:5px;margin-top:9px}
+  .seg button{
+    flex:1;padding:11px 4px 9px;border:1.5px solid var(--rule);
+    border-radius:9px;background:#FAFAF8;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    transition:background .12s,border-color .12s,color .12s;
+  }
+  .seg button .k{font-family:var(--mono);font-size:16px;font-weight:600;line-height:1}
+  .seg button .w{font-size:10.5px;color:var(--ink3);letter-spacing:.02em}
+  .seg button[aria-pressed="true"]{color:#fff;border-color:transparent}
+  .seg button[aria-pressed="true"] .w{color:rgba(255,255,255,.82)}
+  .seg button[data-v="B"][aria-pressed="true"]{background:var(--bon)}
+  .seg button[data-v="M"][aria-pressed="true"]{background:var(--moyen)}
+  .seg button[data-v="N"][aria-pressed="true"]{background:var(--mauvais)}
+  .seg button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .el textarea{margin-top:9px;min-height:44px}
+  .ref{
+    margin-top:8px;padding:8px 10px;border-radius:7px;
+    background:#F3F1EC;border-left:3px solid #C3B490;
+    font-size:13px;color:var(--ink2);
+  }
+  .ref b{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink)}
+
+  /* ---------- photos ---------- */
+  .photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+  .ph{
+    position:relative;width:76px;height:76px;border-radius:8px;
+    overflow:hidden;border:1px solid var(--rule);background:#EEE;
+  }
+  .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .ph .num{
+    position:absolute;left:0;top:0;background:rgba(21,24,28,.78);color:#fff;
+    font-family:var(--mono);font-size:10px;padding:1px 5px;border-bottom-right-radius:6px;
+  }
+  .ph .del{
+    position:absolute;right:2px;bottom:2px;width:22px;height:22px;
+    background:rgba(21,24,28,.78);color:#fff;border-radius:50%;
+    font-size:14px;line-height:22px;text-align:center;
+  }
+  .addph{
+    width:76px;height:76px;border:1.5px dashed var(--rule);border-radius:8px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;color:var(--ink3);background:#FAFAF8;
+  }
+  .addph span{font-size:11px}
+  .addph .plus{font-size:20px;line-height:1}
+  .ph.refph{opacity:.72;border-style:dashed}
+
+  /* ---------- signature ---------- */
+  .sigbox{
+    border:1px solid var(--rule);border-radius:9px;background:#FCFCFB;
+    height:150px;position:relative;overflow:hidden;
+  }
+  .sigbox canvas{width:100%;height:100%;display:block;touch-action:none}
+  .sigbox .hint{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--ink3);font-size:13px;pointer-events:none;
+  }
+  .sigbox.has .hint{display:none}
+  .sigline{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:7px;
+  }
+  .link{color:var(--focus);font-size:13.5px;font-weight:500;padding:4px 0}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    padding:13px 18px;border-radius:9px;font-weight:600;font-size:15px;
+    background:var(--nav);color:#fff;width:100%;
+  }
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--rule)}
+  .btn.warn{background:#6A4A20}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .btnrow{display:flex;gap:9px}
+  .btnrow .btn{flex:1}
+
+  footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;
+    background:rgba(244,243,239,.94);backdrop-filter:blur(8px);
+    border-top:1px solid var(--rule);
+    padding:10px var(--pad) calc(env(safe-area-inset-bottom) + 10px);
+  }
+  footer .inner{max-width:760px;margin:0 auto;display:flex;gap:9px}
+  footer .btn{flex:1}
+
+  .note{font-size:13px;color:var(--ink2);margin:0 0 12px}
+  .warnbox{
+    background:#FBF3E2;border:1px solid #E5D2A8;border-radius:9px;
+    padding:12px;font-size:13.5px;color:#6A4A20;margin-bottom:12px;
+  }
+  #toast{
+    position:fixed;left:50%;bottom:104px;transform:translateX(-50%) translateY(8px);
+    background:var(--ink);color:#fff;padding:11px 17px;border-radius:9px;
+    font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:60;
+    max-width:88vw;text-align:center;
+  }
+  #toast.on{opacity:1;transform:translateX(-50%)}
+  .hidden{display:none !important}
+</style>
+
+<header>
+  <div class="hrow">
+    <div style="min-width:0">
+      <div class="htitle">État des lieux</div>
+      <div class="haddr empty" id="hAddr">Adresse à renseigner</div>
+    </div>
+    <div class="badge entree" id="hBadge">Entrée</div>
+  </div>
+  <div class="saved" id="hSaved"></div>
+  <nav id="tabs" role="tablist"></nav>
+</header>
+
+<main>
+  <div class="panel on" id="p-infos"></div>
+  <div class="panel" id="p-compteurs"></div>
+  <div class="panel" id="p-cuisine"></div>
+  <div class="panel" id="p-salon"></div>
+  <div class="panel" id="p-chambre"></div>
+  <div class="panel" id="p-sdb"></div>
+  <div class="panel" id="p-fin"></div>
+</main>
+
+<footer>
+  <div class="inner">
+    <button class="btn ghost" id="btnImport">Ouvrir un fichier</button>
+    <button class="btn" id="btnExport">Exporter</button>
+  </div>
+</footer>
+
+<input type="file" id="fileIn" accept=".html,text/html" class="hidden">
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ modèle ============ */
+const ROOMS = [
+  { id:"cuisine", name:"Cuisine", els:[
+    "Sols","Murs / plafond","Fenêtre / volet","Porte",
+    "Électricité / prises","Chauffage",
+    "Plan de travail & rangements","Évier / robinetterie","Appareils encastrés"
+  ]},
+  { id:"salon", name:"Espace salon", els:[
+    "Sols","Murs / plafond","Fenêtres / volets","Porte",
+    "Électricité / prises","Chauffage","Rangements / placards"
+  ]},
+  { id:"chambre", name:"Espace chambre", els:[
+    "Sols","Murs / plafond","Fenêtres / volets","Porte",
+    "Électricité / prises","Chauffage","Rangements / placards"
+  ]},
+  { id:"sdb", name:"Salle de bain", els:[
+    "Sols","Murs / plafond","Fenêtre / ventilation","Porte",
+    "Électricité / prises","Chauffage",
+    "Douche / baignoire","Lavabo / robinetterie","WC"
+  ]}
+];
+const TABS = [
+  {id:"infos",    label:"Infos"},
+  {id:"compteurs",label:"Compteurs"},
+  {id:"cuisine",  label:"Cuisine"},
+  {id:"salon",    label:"Salon"},
+  {id:"chambre",  label:"Chambre"},
+  {id:"sdb",      label:"Salle de bain"},
+  {id:"fin",      label:"Signatures"}
+];
+const VALS = [["B","Bon"],["M","Moyen"],["N","Mauvais"]];
+
+function blank(){
+  const rooms = {};
+  ROOMS.forEach(r=>{
+    rooms[r.id] = {};
+    r.els.forEach(e=>{ rooms[r.id][e] = {etat:"",obs:""}; });
+  });
+  const photos = {}; ROOMS.forEach(r=>photos[r.id]=[]);
+  return {
+    v:1,
+    type:"entree",
+    meta:{date:today(),adresse:"",bailleur:"",locataire:"",cles:"",badges:""},
+    compteurs:{elec:"",elecNum:"",eauF:"",eauC:"",gaz:""},
+    rooms, photos,
+    obsGen:"",
+    sig:{bailleur:"",locataire:"",lieu:"",dateSig:today()},
+    ref:null
+  };
+}
+function today(){
+  const d=new Date(),p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+function frDate(iso){
+  if(!iso) return "";
+  const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y;
+}
+
+let S = blank();
+let current = "infos";
+
+/* ============ stockage (brouillon) ============ */
+const store = {
+  ok(){ return typeof window!=="undefined" && window.storage && window.storage.set; },
+  async saveData(){
+    if(!this.ok()) return;
+    const {photos, ...rest} = S;
+    try{ await window.storage.set("edl:draft:data", JSON.stringify(rest)); }
+    catch(e){ console.warn("save data",e); }
+  },
+  async savePhotos(roomId){
+    if(!this.ok()) return;
+    try{ await window.storage.set("edl:draft:ph:"+roomId, JSON.stringify(S.photos[roomId]||[])); }
+    catch(e){ toast("Photo trop lourde pour le brouillon"); }
+  },
+  async load(){
+    if(!this.ok()) return false;
+    let data=null;
+    try{ const r=await window.storage.get("edl:draft:data"); if(r&&r.value) data=JSON.parse(r.value); }
+    catch(e){ return false; }
+    if(!data) return false;
+    const photos={};
+    for(const r of ROOMS){
+      photos[r.id]=[];
+      try{
+        const res=await window.storage.get("edl:draft:ph:"+r.id);
+        if(res&&res.value) photos[r.id]=JSON.parse(res.value);
+      }catch(e){}
+    }
+    S=Object.assign(blank(),data); S.photos=photos;
+    return true;
+  },
+  async clear(){
+    if(!this.ok()) return;
+    try{ await window.storage.delete("edl:draft:data"); }catch(e){}
+    for(const r of ROOMS){ try{ await window.storage.delete("edl:draft:ph:"+r.id); }catch(e){} }
+  }
+};
+
+let saveTimer=null;
+function touchSave(){
+  markSaved("Enregistrement…");
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    await store.saveData();
+    markSaved("Brouillon enregistré");
+  },700);
+}
+function markSaved(txt){
+  const el=document.getElementById("hSaved");
+  el.textContent=txt;
+  if(txt==="Brouillon enregistré"){
+    clearTimeout(markSaved._t);
+    markSaved._t=setTimeout(()=>{el.textContent="";},2200);
+  }
+}
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("on");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("on"),2400);
+}
+
+/* ============ rendu ============ */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function renderTabs(){
+  const nav=document.getElementById("tabs");
+  nav.innerHTML=TABS.map(t=>
+    `<button class="tab" role="tab" data-tab="${t.id}"
+       aria-selected="${t.id===current}" data-done="${tabDone(t.id)?1:0}">
+       <span class="dot"></span>${esc(t.label)}</button>`
+  ).join("");
+  nav.querySelectorAll(".tab").forEach(b=>{
+    b.onclick=()=>{ current=b.dataset.tab; renderAll(); window.scrollTo({top:0}); };
+  });
+}
+function tabDone(id){
+  if(id==="infos") return !!(S.meta.adresse && S.meta.locataire);
+  if(id==="compteurs") return !!(S.compteurs.elec || S.compteurs.eauF);
+  if(id==="fin") return !!(S.sig.bailleur && S.sig.locataire);
+  const r=ROOMS.find(r=>r.id===id);
+  if(!r) return false;
+  return r.els.every(e=> (S.rooms[id][e]||{}).etat );
+}
+
+function renderHeader(){
+  const a=document.getElementById("hAddr");
+  a.textContent = S.meta.adresse || "Adresse à renseigner";
+  a.classList.toggle("empty", !S.meta.adresse);
+  const b=document.getElementById("hBadge");
+  b.textContent = S.type==="sortie" ? "Sortie" : "Entrée";
+  b.className = "badge "+(S.type==="sortie"?"sortie":"entree");
+}
+
+function fieldText(label,val,oninput,type){
+  return `<label class="f"><span class="lab">${esc(label)}</span>
+    <input type="${type||"text"}" value="${esc(val)}" data-bind="${oninput}"></label>`;
+}
+
+function renderInfos(){
+  const p=document.getElementById("p-infos");
+  p.innerHTML=`
+    <h2>Le logement</h2>
+    <div class="card">
+      ${fieldText("Adresse du logement",S.meta.adresse,"meta.adresse")}
+      <div class="grid2">
+        ${fieldText("Date de l'état des lieux",S.meta.date,"meta.date","date")}
+        <label class="f"><span class="lab">Nature</span>
+          <select data-bind="type">
+            <option value="entree"${S.type==="entree"?" selected":""}>Entrée</option>
+            <option value="sortie"${S.type==="sortie"?" selected":""}>Sortie</option>
+          </select></label>
+      </div>
+    </div>
+    <h2>Les parties</h2>
+    <div class="card">
+      ${fieldText("Bailleur / mandataire",S.meta.bailleur,"meta.bailleur")}
+      ${fieldText("Locataire",S.meta.locataire,"meta.locataire")}
+    </div>
+    <h2>Remise des accès</h2>
+    <div class="card">
+      <div class="grid2">
+        ${fieldText("Nombre de clés remises",S.meta.cles,"meta.cles")}
+        ${fieldText("Badges / télécommandes",S.meta.badges,"meta.badges")}
+      </div>
+    </div>`;
+}
+
+function renderCompteurs(){
+  const c=S.compteurs;
+  document.getElementById("p-compteurs").innerHTML=`
+    <h2>Relevés</h2>
+    <p class="note">Photographie chaque compteur avec les chiffres lisibles, dans la pièce concernée.</p>
+    <div class="card">
+      <div class="grid2">
+        ${fieldText("Électricité (kWh)",c.elec,"compteurs.elec")}
+        ${fieldText("N° compteur électrique",c.elecNum,"compteurs.elecNum")}
+      </div>
+      <div class="grid2">
+        ${fieldText("Eau froide (m³)",c.eauF,"compteurs.eauF")}
+        ${fieldText("Eau chaude (m³)",c.eauC,"compteurs.eauC")}
+      </div>
+      ${fieldText("Gaz (m³)",c.gaz,"compteurs.gaz")}
+    </div>`;
+}
+
+function renderRoom(room){
+  const st=S.rooms[room.id];
+  const refRoom = S.ref && S.ref.rooms ? S.ref.rooms[room.id] : null;
+  const els = room.els.map(name=>{
+    const v=st[name]||{etat:"",obs:""};
+    const segs=VALS.map(([k,w])=>
+      `<button data-v="${k}" data-el="${esc(name)}" data-room="${room.id}"
+        aria-pressed="${v.etat===k}" aria-label="${w}">
+        <span class="k">${k}</span><span class="w">${w}</span></button>`).join("");
+    let ref="";
+    if(refRoom && refRoom[name] && (refRoom[name].etat||refRoom[name].obs)){
+      const r=refRoom[name];
+      ref=`<div class="ref"><b>Entrée : ${esc(r.etat||"—")}</b>${r.obs?" · "+esc(r.obs):""}</div>`;
+    }
+    return `<div class="el">
+      <div class="elhead"><div class="elname">${esc(name)}</div></div>
+      <div class="seg">${segs}</div>
+      ${ref}
+      <textarea placeholder="Observation (rayure, tache, fonctionnement…)"
+        data-obs="${esc(name)}" data-room="${room.id}">${esc(v.obs)}</textarea>
+    </div>`;
+  }).join("");
+
+  const refPhotos = (S.ref && S.ref.photos && S.ref.photos[room.id]) ? S.ref.photos[room.id] : [];
+  const refStrip = refPhotos.length
+    ? `<h2>Photos de l'entrée</h2><div class="card"><div class="photos">`+
+      refPhotos.map((p,i)=>`<div class="ph refph"><img src="${p.data}" alt=""><span class="num">E${i+1}</span></div>`).join("")+
+      `</div></div>` : "";
+
+  document.getElementById("p-"+room.id).innerHTML=`
+    <h2>${esc(room.name)}</h2>
+    <div class="card">${els}</div>
+    <h2>Photos — ${esc(room.name)}</h2>
+    <div class="card">
+      <div class="photos" id="ph-${room.id}"></div>
+    </div>
+    ${refStrip}`;
+  renderPhotos(room.id);
+}
+
+function renderPhotos(roomId){
+  const wrap=document.getElementById("ph-"+roomId);
+  if(!wrap) return;
+  const list=S.photos[roomId]||[];
+  wrap.innerHTML = list.map((p,i)=>
+    `<div class="ph"><img src="${p.data}" alt="Photo ${i+1}">
+      <span class="num">${i+1}</span>
+      <button class="del" data-del="${i}" data-room="${roomId}" aria-label="Supprimer">×</button>
+    </div>`).join("") +
+    `<button class="addph" data-add="${roomId}">
+       <span class="plus">+</span><span>Photo</span></button>`;
+}
+
+function renderFin(){
+  const s=S.sig;
+  document.getElementById("p-fin").innerHTML=`
+    <h2>Observations générales</h2>
+    <div class="card">
+      <label class="f"><span class="lab">Propreté, odeurs, éléments manquants…</span>
+      <textarea data-bind="obsGen" style="min-height:90px">${esc(S.obsGen)}</textarea></label>
+    </div>
+    <h2>Lieu et date</h2>
+    <div class="card">
+      <div class="grid2">
+        ${fieldText("Fait à",s.lieu,"sig.lieu")}
+        ${fieldText("Le",s.dateSig,"sig.dateSig","date")}
+      </div>
+    </div>
+    <h2>Signatures</h2>
+    <div class="card">
+      <span class="lab">Le bailleur / mandataire</span>
+      <div class="sigbox${s.bailleur?" has":""}" id="sb-bailleur">
+        <canvas></canvas><div class="hint">Signez ici avec le doigt</div>
+      </div>
+      <div class="sigline"><span></span>
+        <button class="link" data-clear="bailleur">Effacer</button></div>
+    </div>
+    <div class="card">
+      <span class="lab">Le locataire</span>
+      <div class="sigbox${s.locataire?" has":""}" id="sb-locataire">
+        <canvas></canvas><div class="hint">Signez ici avec le doigt</div>
+      </div>
+      <div class="sigline"><span></span>
+        <button class="link" data-clear="locataire">Effacer</button></div>
+    </div>
+    <h2>Terminer</h2>
+    <div class="warnbox">L'export produit un fichier unique contenant le constat, les photos et les signatures.
+      Conserve-le : tu le rouvriras à la sortie pour comparer.</div>
+    <div class="btnrow" style="margin-bottom:9px">
+      <button class="btn" id="btnExport2">Exporter le fichier</button>
+    </div>
+    <p class="note">Si le téléchargement ne part pas, ouvre le rapport puis utilise
+      le bouton Partager de Safari pour l'enregistrer dans Fichiers.</p>
+    <div class="btnrow" style="margin-bottom:12px">
+      <button class="btn ghost" id="btnView">Ouvrir le rapport</button>
+    </div>
+    <button class="btn ghost" id="btnNew">Nouvel état des lieux</button>`;
+  document.getElementById("btnExport2").onclick=exportFile;
+  document.getElementById("btnView").onclick=viewReport;
+  document.getElementById("btnNew").onclick=async()=>{
+    if(!confirm("Repartir d'un document vierge ? Le brouillon en cours sera effacé.")) return;
+    await store.clear(); S=blank(); current="infos"; renderAll();
+    toast("Nouveau document");
+  };
+}
+
+function renderAll(){
+  renderHeader(); renderTabs();
+  renderInfos(); renderCompteurs(); ROOMS.forEach(renderRoom); renderFin();
+  document.querySelectorAll(".panel").forEach(p=>{
+    p.classList.toggle("on", p.id==="p-"+current);
+  });
+  // les canvas doivent etre dimensionnes APRES l'affichage du panneau,
+  // sinon getBoundingClientRect renvoie 0 et la signature ne s'enregistre pas
+  if(current==="fin"){
+    requestAnimationFrame(()=>{ setupSig("bailleur"); setupSig("locataire"); });
+  }
+}
+
+/* ============ interactions ============ */
+function setPath(path,val){
+  const parts=path.split(".");
+  if(parts.length===1){ S[parts[0]]=val; }
+  else { S[parts[0]][parts[1]]=val; }
+}
+
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.bind){
+    setPath(t.dataset.bind, t.value);
+    if(t.dataset.bind==="meta.adresse"||t.dataset.bind==="type") renderHeader();
+    if(t.dataset.bind==="type") { renderTabs(); }
+    touchSave(); return;
+  }
+  if(t.dataset.obs!==undefined && t.dataset.room){
+    S.rooms[t.dataset.room][t.dataset.obs].obs=t.value;
+    touchSave(); return;
+  }
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.bind==="type"){ renderAll(); touchSave(); }
+});
+
+document.addEventListener("click",e=>{
+  const seg=e.target.closest(".seg button");
+  if(seg){
+    const {room,el,v}=seg.dataset;
+    const cur=S.rooms[room][el].etat;
+    S.rooms[room][el].etat = (cur===v ? "" : v);
+    seg.parentElement.querySelectorAll("button").forEach(b=>{
+      b.setAttribute("aria-pressed", String(b.dataset.v===S.rooms[room][el].etat));
+    });
+    renderTabs(); touchSave(); return;
+  }
+  const add=e.target.closest("[data-add]");
+  if(add){ pickPhotos(add.dataset.add); return; }
+  const del=e.target.closest("[data-del]");
+  if(del){
+    const {room,del:i}=del.dataset;
+    S.photos[room].splice(Number(i),1);
+    renderPhotos(room); store.savePhotos(room); touchSave(); return;
+  }
+  const clr=e.target.closest("[data-clear]");
+  if(clr){
+    const who=clr.dataset.clear;
+    S.sig[who]="";
+    const box=document.getElementById("sb-"+who);
+    box.classList.remove("has");
+    const c=box.querySelector("canvas"), x=c.getContext("2d");
+    x.clearRect(0,0,c.width,c.height);
+    renderTabs(); touchSave(); return;
+  }
+});
+
+/* ============ photos ============ */
+let pendingRoom=null;
+const fileIn=document.getElementById("fileIn");
+const photoIn=document.createElement("input");
+photoIn.type="file"; photoIn.accept="image/*"; photoIn.multiple=true; photoIn.className="hidden";
+document.body.appendChild(photoIn);
+
+function pickPhotos(roomId){ pendingRoom=roomId; photoIn.value=""; photoIn.click(); }
+
+photoIn.addEventListener("change", async ()=>{
+  const files=[...photoIn.files]; if(!files.length||!pendingRoom) return;
+  toast(files.length>1?"Compression des photos…":"Compression de la photo…");
+  for(const f of files){
+    try{
+      const data=await compress(f);
+      S.photos[pendingRoom].push({data, ts:Date.now()});
+    }catch(err){ console.warn(err); toast("Photo illisible, ignorée"); }
+  }
+  renderPhotos(pendingRoom);
+  await store.savePhotos(pendingRoom);
+  toast(files.length>1?"Photos ajoutées":"Photo ajoutée");
+});
+
+function compress(file, max=1100, q=0.62){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      let {width:w,height:h}=img;
+      const sc=Math.min(1,max/Math.max(w,h));
+      w=Math.round(w*sc); h=Math.round(h*sc);
+      const cv=document.createElement("canvas");
+      cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(cv.toDataURL("image/jpeg",q));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("img"));};
+    img.src=url;
+  });
+}
+
+/* ============ signature ============ */
+function setupSig(who){
+  const box=document.getElementById("sb-"+who);
+  if(!box) return;
+  const cv=box.querySelector("canvas");
+  const rect=box.getBoundingClientRect();
+  // panneau encore masque : on repasse au prochain cycle
+  if(rect.width<2||rect.height<2){
+    requestAnimationFrame(()=>setupSig(who));
+    return;
+  }
+  if(cv.dataset.ready==="1") return;
+  cv.dataset.ready="1";
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(rect.width*dpr));
+  cv.height=Math.max(1,Math.round(rect.height*dpr));
+  const ctx=cv.getContext("2d");
+  ctx.scale(dpr,dpr);
+  ctx.lineWidth=2.2; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.strokeStyle="#15181C";
+
+  if(S.sig[who]){
+    const img=new Image();
+    img.onload=()=>ctx.drawImage(img,0,0,rect.width,rect.height);
+    img.src=S.sig[who];
+  }
+  let drawing=false;
+  const pos=ev=>{
+    const r=cv.getBoundingClientRect();
+    return {x:ev.clientX-r.left, y:ev.clientY-r.top};
+  };
+  cv.addEventListener("pointerdown",ev=>{
+    drawing=true; cv.setPointerCapture(ev.pointerId);
+    const p=pos(ev); ctx.beginPath(); ctx.moveTo(p.x,p.y);
+    box.classList.add("has");
+  });
+  cv.addEventListener("pointermove",ev=>{
+    if(!drawing) return;
+    const p=pos(ev); ctx.lineTo(p.x,p.y); ctx.stroke();
+  });
+  const end=()=>{
+    if(!drawing) return; drawing=false;
+    S.sig[who]=cv.toDataURL("image/png");
+    renderTabs(); touchSave();
+  };
+  cv.addEventListener("pointerup",end);
+  cv.addEventListener("pointercancel",end);
+  cv.addEventListener("pointerleave",end);
+}
+
+/* ============ export ============ */
+function reportHTML(){
+  const t = S.type==="sortie" ? "SORTIE" : "ENTRÉE";
+  const roomBlocks = ROOMS.map(r=>{
+    const rows=r.els.map(name=>{
+      const v=S.rooms[r.id][name]||{};
+      const ref = S.ref && S.ref.rooms && S.ref.rooms[r.id] && S.ref.rooms[r.id][name];
+      const refTxt = ref && (ref.etat||ref.obs)
+        ? `<div class="rr">Entrée : ${esc(ref.etat||"—")}${ref.obs?" · "+esc(ref.obs):""}</div>` : "";
+      return `<tr><td class="n">${esc(name)}</td>
+        <td class="e ${v.etat==="N"?"bad":v.etat==="M"?"mid":v.etat==="B"?"good":""}">${esc(v.etat||"—")}</td>
+        <td>${esc(v.obs||"")}${refTxt}</td></tr>`;
+    }).join("");
+    const ph=(S.photos[r.id]||[]).map((p,i)=>
+      `<figure><img src="${p.data}"><figcaption>${esc(r.name)} — ${i+1}</figcaption></figure>`).join("");
+    return `<section><h3>${esc(r.name)}</h3>
+      <table><thead><tr><th>Élément</th><th>État</th><th>Observations</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+      ${ph?`<div class="gal">${ph}</div>`:""}</section>`;
+  }).join("");
+
+  const sig=(who,label)=>
+    `<div class="sg"><div class="sl">${label}</div>${
+      S.sig[who]?`<img src="${S.sig[who]}">`:`<div class="sempty">Non signé</div>`}</div>`;
+
+  return `<!doctype html><meta charset="utf-8">
+<title>État des lieux ${t} — ${esc(S.meta.adresse||"")}</title>
+<style>
+ body{font:14px/1.5 -apple-system,system-ui,sans-serif;color:#15181C;margin:0;padding:28px;background:#fff;max-width:900px}
+ h1{font-size:20px;margin:0 0 2px}
+ .sub{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#7A828A;margin-bottom:20px}
+ h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#7A828A;margin:26px 0 8px}
+ h3{font-size:15px;margin:22px 0 7px;padding-bottom:5px;border-bottom:2px solid #1E2C3A}
+ table{width:100%;border-collapse:collapse;margin-bottom:10px}
+ th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#7A828A;border-bottom:1px solid #E1DDD5;padding:5px 6px}
+ td{border-bottom:1px solid #EFEDE8;padding:7px 6px;vertical-align:top}
+ td.n{width:31%;font-weight:600}
+ td.e{width:11%;font-family:ui-monospace,Menlo,monospace;font-weight:700;text-align:center}
+ td.e.good{color:#2F7A57}td.e.mid{color:#B0761A}td.e.bad{color:#A93A29}
+ .rr{margin-top:4px;font-size:12.5px;color:#6A6F75;border-left:3px solid #C3B490;padding-left:7px}
+ .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:6px}
+ .kv div{border-bottom:1px solid #EFEDE8;padding:5px 0;font-size:13.5px}
+ .kv b{color:#7A828A;font-weight:600;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;display:block}
+ .gal{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 4px}
+ figure{margin:0;width:150px}
+ figure img{width:150px;height:150px;object-fit:cover;border:1px solid #E1DDD5;border-radius:5px;display:block}
+ figcaption{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#7A828A;margin-top:3px}
+ .sigs{display:flex;gap:22px;margin-top:10px;flex-wrap:wrap}
+ .sg{flex:1;min-width:230px}
+ .sl{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:#7A828A;font-weight:600;margin-bottom:5px}
+ .sg img{width:100%;max-width:290px;height:110px;object-fit:contain;border:1px solid #E1DDD5;border-radius:6px;background:#fff}
+ .sempty{height:110px;border:1px dashed #E1DDD5;border-radius:6px;color:#A8AEB4;display:flex;align-items:center;justify-content:center;font-size:13px}
+ .foot{margin-top:26px;padding-top:12px;border-top:1px solid #E1DDD5;font-size:11.5px;color:#7A828A}
+ @media print{body{padding:0}section{break-inside:avoid}figure{break-inside:avoid}}
+</style>
+<h1>État des lieux ${S.type==="sortie"?"de sortie":"d'entrée"}</h1>
+<div class="sub">${esc(S.meta.adresse||"Adresse non renseignée")} · ${esc(frDate(S.meta.date))}</div>
+
+<h2>Identification</h2>
+<div class="kv">
+  <div><b>Bailleur / mandataire</b>${esc(S.meta.bailleur||"—")}</div>
+  <div><b>Locataire</b>${esc(S.meta.locataire||"—")}</div>
+  <div><b>Clés remises</b>${esc(S.meta.cles||"—")}</div>
+  <div><b>Badges / télécommandes</b>${esc(S.meta.badges||"—")}</div>
+</div>
+
+<h2>Relevés de compteurs</h2>
+<div class="kv">
+  <div><b>Électricité (kWh)</b>${esc(S.compteurs.elec||"—")}</div>
+  <div><b>N° compteur électrique</b>${esc(S.compteurs.elecNum||"—")}</div>
+  <div><b>Eau froide (m³)</b>${esc(S.compteurs.eauF||"—")}</div>
+  <div><b>Eau chaude (m³)</b>${esc(S.compteurs.eauC||"—")}</div>
+  <div><b>Gaz (m³)</b>${esc(S.compteurs.gaz||"—")}</div>
+</div>
+
+<h2>État des pièces</h2>
+<div class="sub" style="margin-bottom:8px">B = bon état · M = état moyen / usage · N = mauvais état</div>
+${roomBlocks}
+
+<h2>Observations générales</h2>
+<p>${esc(S.obsGen||"—").replace(/\n/g,"<br>")}</p>
+
+<h2>Signatures</h2>
+<p style="font-size:13px">Fait à ${esc(S.sig.lieu||"—")}, le ${esc(frDate(S.sig.dateSig))}.
+Les photographies annexées font partie intégrante du présent état des lieux.</p>
+<div class="sigs">${sig("bailleur","Le bailleur / mandataire")}${sig("locataire","Le locataire")}</div>
+
+<div class="foot">Document établi contradictoirement — article 3-2 de la loi n°89-462 du 6 juillet 1989.</div>
+<script type="application/json" id="edl-data">${JSON.stringify(S).replace(/</g,"\\u003c")}<\/script>`;
+}
+
+function viewReport(){
+  if(!S.meta.adresse){ toast("Renseigne l'adresse avant d'ouvrir le rapport"); current="infos"; renderAll(); return; }
+  const html=reportHTML();
+  const w=window.open("","_blank");
+  if(w && w.document){
+    w.document.open(); w.document.write(html); w.document.close();
+    toast("Rapport ouvert");
+  }else{
+    const blob=new Blob([html],{type:"text/html"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.target="_blank"; a.rel="noopener";
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},2000);
+  }
+}
+
+function exportFile(){
+  if(!S.meta.adresse){ toast("Renseigne l'adresse avant d'exporter"); current="infos"; renderAll(); return; }
+  const html=reportHTML();
+  const slug=(S.meta.adresse||"logement").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+  const name=`EDL-${S.type}-${slug}-${S.meta.date}.html`;
+  const blob=new Blob([html],{type:"text/html"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+  toast("Fichier exporté");
+}
+
+/* ============ import ============ */
+document.getElementById("btnImport").onclick=()=>{ fileIn.value=""; fileIn.click(); };
+document.getElementById("btnExport").onclick=exportFile;
+
+fileIn.addEventListener("change",async()=>{
+  const f=fileIn.files[0]; if(!f) return;
+  let txt;
+  try{ txt=await f.text(); }catch(e){ toast("Fichier illisible"); return; }
+  const m=txt.match(/<script type="application\/json" id="edl-data">([\s\S]*?)<\/script>/);
+  if(!m){ toast("Ce fichier n'est pas un état des lieux exporté"); return; }
+  let data;
+  try{ data=JSON.parse(m[1].replace(/\\u003c/g,"<")); }
+  catch(e){ toast("Fichier endommagé"); return; }
+
+  const wasEntree = data.type!=="sortie";
+  if(wasEntree && confirm("État des lieux d'entrée chargé.\n\nCréer l'état des lieux de sortie à partir de celui-ci ?")){
+    const ref={rooms:data.rooms, photos:data.photos};
+    S=blank();
+    S.type="sortie";
+    S.meta=Object.assign({},data.meta,{date:today()});
+    S.ref=ref;
+    S.sig.dateSig=today();
+    toast("Sortie créée — les valeurs d'entrée sont rappelées");
+  }else{
+    S=Object.assign(blank(),data);
+    toast("État des lieux chargé");
+  }
+  current="infos"; renderAll();
+  await store.saveData();
+  for(const r of ROOMS) await store.savePhotos(r.id);
+});
+
+/* ============ init ============ */
+(async function init(){
+  renderAll();
+  const had=await store.load();
+  if(had){ renderAll(); markSaved("Brouillon restauré"); }
+})();
+
+window.addEventListener("resize",()=>{
+  if(current==="fin"){ setupSig("bailleur"); setupSig("locataire"); }
+});
+})();
+</script>
