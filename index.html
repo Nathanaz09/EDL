@@ -1,6 +1,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>État des lieux</title>
+<!-- ouverture en app plein ecran depuis l ecran d accueil iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="État des lieux">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1E2C3A">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAC70lEQVR42u3bMU4CQRSAYdlwDhIbQ2FPsNfYcAxOYWEsPIXHoDF6AMMNiI2JJ7Gg2RDiTjbGnffm+zuxcNn9mMcsMltc31xI5+qcAsEhOASH4BAcgkNwCA7BITgkOASH4BAcgkNwCA7BITgEhwSH4BAcgkP/2XzCv33Yv7oAJS1X95P83dkkX4fEIgSRjowo/f9568jgowocZMQ6hx0ZfNjKqlYclo2I59PKITgEh+AQHIJDcAgOwSE4BIcEh+AQHIJDcAgOBWke4ijXz9v+jx8PL64cHKcs+g8i0vRYOSuj8LfKvHKUXPv183Zw/fj++qz5Aiwur+CYoMpZ9A+yTiKVjpXykWG42MrmXDYqP1r3OQSH4AixC4hytJXiKL/B5VaYrez4l6P7HAlxfDy8DG5TS5aNWPPFWPmb4WKgtD5WjgJ8KguHRcJYERyCQ3AIDgkOwSE4BIfgEByCQ3AIDrVTjI/s356W/R/vHg+uHBynLPoPItL0WDkro/C3yrxylFz7t6fl4Prhv8+Tv+cYl2/Z5xwr5SPDcLGVzblsVH607nMIDsERYhcQ5WgrxVF+g8utMFvZ8S9H9zkS4rh7PAxuU0uWDd+yz/me4/drb6C0PlaOAnwqC4dFwlgRHIJDcAgOCQ7BITgEh+AQHIJDcAgOtVOMj+x3t6v+j5v3vSsHxymL/oOIND1Wzsoo/K0yrxwl1353uxpcP/z3efL3HOPyLfucY6V8ZBgutrI5l43Kj9Z9DsEhOELsAqIcbaU4ym9wuRVmKzv+5eg+R0Icm/f94Da1ZNnwLfuc7zl+v/YGSutj5SjAp7JwWCSMFcEhOASH4JDgEByCQ3AIDsEhOASH4BAcEhyCQ3AIDsEhONQ2juXq3rkOdz6tHKoAh8Uj3JnsUj4rMkKOFT4Cnb0u/TMkY3SzxfXNVM/2sH91yWt+OU2JQ3YrgkNwCA4JDsEhOASH4BAcgkNwCA7BITgkOASH4BAcgkNwCA7BITjUYD/2Z8ohZImQ6gAAAABJRU5ErkJggg==">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAC70lEQVR42u3bMU4CQRSAYdlwDhIbQ2FPsNfYcAxOYWEsPIXHoDF6AMMNiI2JJ7Gg2RDiTjbGnffm+zuxcNn9mMcsMltc31xI5+qcAsEhOASH4BAcgkNwCA7BITgkOASH4BAcgkNwCA7BITgEhwSH4BAcgkP/2XzCv33Yv7oAJS1X95P83dkkX4fEIgSRjowo/f9568jgowocZMQ6hx0ZfNjKqlYclo2I59PKITgEh+AQHIJDcAgOwSE4BIcEh+AQHIJDcAgOBWke4ijXz9v+jx8PL64cHKcs+g8i0vRYOSuj8LfKvHKUXPv183Zw/fj++qz5Aiwur+CYoMpZ9A+yTiKVjpXykWG42MrmXDYqP1r3OQSH4AixC4hytJXiKL/B5VaYrez4l6P7HAlxfDy8DG5TS5aNWPPFWPmb4WKgtD5WjgJ8KguHRcJYERyCQ3AIDgkOwSE4BIfgEByCQ3AIDrVTjI/s356W/R/vHg+uHBynLPoPItL0WDkro/C3yrxylFz7t6fl4Prhv8+Tv+cYl2/Z5xwr5SPDcLGVzblsVH607nMIDsERYhcQ5WgrxVF+g8utMFvZ8S9H9zkS4rh7PAxuU0uWDd+yz/me4/drb6C0PlaOAnwqC4dFwlgRHIJDcAgOCQ7BITgEh+AQHIJDcAgOtVOMj+x3t6v+j5v3vSsHxymL/oOIND1Wzsoo/K0yrxwl1353uxpcP/z3efL3HOPyLfucY6V8ZBgutrI5l43Kj9Z9DsEhOELsAqIcbaU4ym9wuRVmKzv+5eg+R0Icm/f94Da1ZNnwLfuc7zl+v/YGSutj5SjAp7JwWCSMFcEhOASH4JDgEByCQ3AIDsEhOASH4BAcEhyCQ3AIDsEhONQ2juXq3rkOdz6tHKoAh8Uj3JnsUj4rMkKOFT4Cnb0u/TMkY3SzxfXNVM/2sH91yWt+OU2JQ3YrgkNwCA4JDsEhOASH4BAcgkNwCA7BITgkOASH4BAcgkNwCA7BITjUYD/2Z8ohZImQ6gAAAABJRU5ErkJggg==">
 <style>
   :root{
     --ink:#15181C;
