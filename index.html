@@ -334,6 +334,29 @@ function blank(){
     ref:null
   };
 }
+function normalize(data){
+  // fusionne un fichier importe dans la structure courante :
+  // tolere les champs manquants, les pieces ajoutees ou renommees
+  const base=blank();
+  if(!data||typeof data!=="object") return base;
+  base.type = data.type==="sortie" ? "sortie" : "entree";
+  Object.assign(base.meta, data.meta||{});
+  Object.assign(base.compteurs, data.compteurs||{});
+  Object.assign(base.sig, data.sig||{});
+  base.obsGen = typeof data.obsGen==="string" ? data.obsGen : "";
+  ROOMS.forEach(r=>{
+    const src=(data.rooms&&data.rooms[r.id])||{};
+    r.els.forEach(e=>{
+      const v=src[e]||{};
+      base.rooms[r.id][e]={etat:v.etat||"",obs:v.obs||""};
+    });
+    const ph=(data.photos&&data.photos[r.id])||[];
+    base.photos[r.id]=Array.isArray(ph)?ph.filter(x=>x&&x.data):[];
+  });
+  base.ref = data.ref || null;
+  return base;
+}
+
 function today(){
   const d=new Date(),p=n=>String(n).padStart(2,"0");
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
@@ -417,7 +440,7 @@ const store = {
       try{ const v=await backend.get("edl:draft:ph:"+r.id); if(v) photos[r.id]=JSON.parse(v); }
       catch(e){}
     }
-    S=Object.assign(blank(),data); S.photos=photos;
+    S=normalize(data); S.photos=photos;
     return true;
   },
   async clear(){
@@ -814,7 +837,7 @@ function reportHTML(){
         <td>${esc(v.obs||"")}${refTxt}</td></tr>`;
     }).join("");
     const ph=(S.photos[r.id]||[]).map((p,i)=>
-      `<figure><img src="${p.data}"><figcaption>${esc(r.name)} — ${i+1}</figcaption></figure>`).join("");
+      `<figure><div class="frame"><img src="${p.data}"></div><figcaption>${esc(r.name)} — ${i+1}</figcaption></figure>`).join("");
     return `<section><h3>${esc(r.name)}</h3>
       <table><thead><tr><th>Élément</th><th>État</th><th>Observations</th></tr></thead>
       <tbody>${rows}</tbody></table>
@@ -845,10 +868,12 @@ function reportHTML(){
  .kv b{color:#7A828A;font-weight:600;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;display:block}
  .gal{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:12px 0 6px}
  figure{margin:0}
- figure img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;
-   border:1px solid #E1DDD5;border-radius:5px;display:block}
+ .frame{position:relative;width:100%;padding-bottom:75%;overflow:hidden;
+   border:1px solid #E1DDD5;border-radius:5px;background:#EEE}
+ .frame img{position:absolute;top:0;left:0;width:100%;height:100%;
+   object-fit:cover;display:block}
  figcaption{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#7A828A;margin-top:4px}
- @media (max-width:560px){.gal{grid-template-columns:repeat(2,1fr)}}
+ @media screen and (max-width:560px){.gal{grid-template-columns:repeat(2,1fr)}}
  .sigs{display:flex;gap:22px;margin-top:10px;flex-wrap:wrap}
  .sg{flex:1;min-width:230px}
  .sl{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:#7A828A;font-weight:600;margin-bottom:5px}
@@ -861,11 +886,17 @@ function reportHTML(){
  @media print{
    body{padding:0}
    section{break-inside:avoid}
-   figure{break-inside:avoid}
    tr{break-inside:avoid}
    .sigs{break-inside:avoid}
    h3{break-after:avoid}
    .printbtn{display:none}
+   /* Safari imprime mal la grille et aspect-ratio : dimensions fixes en mm */
+   .gal{display:block !important;font-size:0;margin:4mm 0 2mm}
+   figure{display:inline-block !important;vertical-align:top;
+     width:56mm !important;margin:0 3mm 4mm 0;break-inside:avoid;page-break-inside:avoid}
+   .frame{width:56mm !important;height:42mm !important;padding-bottom:0 !important}
+   .frame img{width:56mm !important;height:42mm !important;object-fit:cover}
+   figcaption{font-size:8pt;margin-top:1mm}
  }
 </style>
 <button class="printbtn" onclick="window.print()">Enregistrer en PDF</button>
@@ -968,7 +999,8 @@ fileIn.addEventListener("change",async()=>{
 
   const wasEntree = data.type!=="sortie";
   if(wasEntree && confirm("État des lieux d'entrée chargé.\n\nCréer l'état des lieux de sortie à partir de celui-ci ?")){
-    const ref={rooms:data.rooms, photos:data.photos};
+    const src=normalize(data);
+    const ref={rooms:src.rooms, photos:src.photos};
     S=blank();
     S.type="sortie";
     S.meta=Object.assign({},data.meta,{date:today()});
@@ -976,7 +1008,7 @@ fileIn.addEventListener("change",async()=>{
     S.sig.dateSig=today();
     toast("Sortie créée — les valeurs d'entrée sont rappelées");
   }else{
-    S=Object.assign(blank(),data);
+    S=normalize(data);
     toast("État des lieux chargé");
   }
   current="infos"; renderAll();
