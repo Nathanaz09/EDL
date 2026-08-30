@@ -238,7 +238,7 @@
 <footer>
   <div class="inner">
     <button class="btn ghost" id="btnImport">Ouvrir un fichier</button>
-    <button class="btn" id="btnExport">Exporter</button>
+    <button class="btn" id="btnExport">Enregistrer en PDF</button>
   </div>
 </footer>
 
@@ -542,17 +542,18 @@ function renderFin(){
         <button class="link" data-clear="locataire">Effacer</button></div>
     </div>
     <h2>Terminer</h2>
-    <div class="warnbox">L'export produit un fichier unique contenant le constat, les photos et les signatures.
-      Conserve-le : tu le rouvriras à la sortie pour comparer.</div>
+    <div class="warnbox"><b>Deux fichiers, deux usages.</b><br>
+      Le <b>PDF</b> est la version signée, à envoyer au locataire et à conserver.<br>
+      Le <b>fichier de suivi</b> se rouvre dans l'app le jour de la sortie. Enregistre les deux.</div>
     <div class="btnrow" style="margin-bottom:9px">
-      <button class="btn" id="btnExport2">Exporter le fichier</button>
+      <button class="btn" id="btnPdf">Enregistrer en PDF</button>
     </div>
-    <p class="note">Si le téléchargement ne part pas, ouvre le rapport puis utilise
-      le bouton Partager de Safari pour l'enregistrer dans Fichiers.</p>
-    <div class="btnrow" style="margin-bottom:12px">
-      <button class="btn ghost" id="btnView">Ouvrir le rapport</button>
+    <div class="btnrow" style="margin-bottom:14px">
+      <button class="btn ghost" id="btnExport2">Fichier de suivi</button>
+      <button class="btn ghost" id="btnView">Aperçu</button>
     </div>
     <button class="btn ghost" id="btnNew">Nouvel état des lieux</button>`;
+  document.getElementById("btnPdf").onclick=exportPDF;
   document.getElementById("btnExport2").onclick=exportFile;
   document.getElementById("btnView").onclick=viewReport;
   document.getElementById("btnNew").onclick=async()=>{
@@ -775,8 +776,20 @@ function reportHTML(){
  .sg img{width:100%;max-width:290px;height:110px;object-fit:contain;border:1px solid #E1DDD5;border-radius:6px;background:#fff}
  .sempty{height:110px;border:1px dashed #E1DDD5;border-radius:6px;color:#A8AEB4;display:flex;align-items:center;justify-content:center;font-size:13px}
  .foot{margin-top:26px;padding-top:12px;border-top:1px solid #E1DDD5;font-size:11.5px;color:#7A828A}
- @media print{body{padding:0}section{break-inside:avoid}figure{break-inside:avoid}}
+ .printbtn{position:fixed;right:14px;bottom:14px;z-index:9;background:#1E2C3A;color:#fff;
+   border:none;border-radius:9px;padding:13px 18px;font-size:15px;font-weight:600;
+   box-shadow:0 3px 14px rgba(0,0,0,.22);font-family:inherit}
+ @media print{
+   body{padding:0}
+   section{break-inside:avoid}
+   figure{break-inside:avoid}
+   tr{break-inside:avoid}
+   .sigs{break-inside:avoid}
+   h3{break-after:avoid}
+   .printbtn{display:none}
+ }
 </style>
+<button class="printbtn" onclick="window.print()">Enregistrer en PDF</button>
 <h1>État des lieux ${S.type==="sortie"?"de sortie":"d'entrée"}</h1>
 <div class="sub">${esc(S.meta.adresse||"Adresse non renseignée")} · ${esc(frDate(S.meta.date))}</div>
 
@@ -813,6 +826,19 @@ Les photographies annexées font partie intégrante du présent état des lieux.
 <script type="application/json" id="edl-data">${JSON.stringify(S).replace(/</g,"\\u003c")}<\/script>`;
 }
 
+function exportPDF(){
+  if(!S.meta.adresse){ toast("Renseigne l'adresse d'abord"); current="infos"; renderAll(); return; }
+  const html=reportHTML();
+  const w=window.open("","_blank");
+  if(!w||!w.document){ toast("Autorise les fenêtres pour Safari, ou utilise Aperçu"); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  // laisser les photos se charger avant d'ouvrir la boite d'impression
+  const go=()=>{ try{ w.focus(); w.print(); }catch(e){} };
+  if(w.document.readyState==="complete") setTimeout(go,700);
+  else w.addEventListener("load",()=>setTimeout(go,700));
+  toast("Choisis « Enregistrer dans Fichiers »");
+}
+
 function viewReport(){
   if(!S.meta.adresse){ toast("Renseigne l'adresse avant d'ouvrir le rapport"); current="infos"; renderAll(); return; }
   const html=reportHTML();
@@ -846,7 +872,7 @@ function exportFile(){
 
 /* ============ import ============ */
 document.getElementById("btnImport").onclick=()=>{ fileIn.value=""; fileIn.click(); };
-document.getElementById("btnExport").onclick=exportFile;
+document.getElementById("btnExport").onclick=exportPDF;
 
 fileIn.addEventListener("change",async()=>{
   const f=fileIn.files[0]; if(!f) return;
