@@ -323,12 +323,13 @@ function blank(){
     r.els.forEach(e=>{ rooms[r.id][e] = {etat:"",obs:""}; });
   });
   const photos = {}; ROOMS.forEach(r=>photos[r.id]=[]);
+  const notes = {}; ROOMS.forEach(r=>notes[r.id]="");
   return {
     v:1,
     type:"entree",
     meta:{date:today(),adresse:"",bailleur:"",locataire:"",cles:"",badges:""},
     compteurs:{elec:"",elecNum:"",eauF:"",eauC:"",gaz:""},
-    rooms, photos,
+    rooms, photos, notes,
     obsGen:"",
     sig:{bailleur:"",locataire:"",lieu:"",dateSig:today()},
     ref:null
@@ -352,6 +353,8 @@ function normalize(data){
     });
     const ph=(data.photos&&data.photos[r.id])||[];
     base.photos[r.id]=Array.isArray(ph)?ph.filter(x=>x&&x.data):[];
+    const nt=data.notes&&data.notes[r.id];
+    base.notes[r.id]=typeof nt==="string"?nt:"";
   });
   base.ref = data.ref || null;
   return base;
@@ -585,9 +588,20 @@ function renderRoom(room){
       refPhotos.map((p,i)=>`<div class="ph refph"><img src="${p.data}" alt=""><span class="num">E${i+1}</span></div>`).join("")+
       `</div></div>` : "";
 
+  const refNote = S.ref && S.ref.notes ? (S.ref.notes[room.id]||"") : "";
+  const refNoteHtml = refNote
+    ? `<div class="ref"><b>Entrée</b> · ${esc(refNote)}</div>` : "";
+
   document.getElementById("p-"+room.id).innerHTML=`
     <h2>${esc(room.name)}</h2>
     <div class="card">${els}</div>
+    <h2>Observations — ${esc(room.name)}</h2>
+    <div class="card">
+      <label class="f"><span class="lab">Mobilier, électroménager, remarques sur la pièce</span>
+      <textarea data-note="${room.id}" style="min-height:80px"
+        placeholder="Ex. : réfrigérateur Bosch encastré en bon état, hotte fonctionnelle…">${esc(S.notes[room.id]||"")}</textarea></label>
+      ${refNoteHtml}
+    </div>
     <h2>Photos — ${esc(room.name)}</h2>
     <div class="card">
       <div class="photos" id="ph-${room.id}"></div>
@@ -693,6 +707,10 @@ document.addEventListener("input",e=>{
   }
   if(t.dataset.obs!==undefined && t.dataset.room){
     S.rooms[t.dataset.room][t.dataset.obs].obs=t.value;
+    touchSave(); return;
+  }
+  if(t.dataset.note){
+    S.notes[t.dataset.note]=t.value;
     touchSave(); return;
   }
 });
@@ -838,9 +856,17 @@ function reportHTML(){
     }).join("");
     const ph=(S.photos[r.id]||[]).map((p,i)=>
       `<figure><div class="frame"><img src="${p.data}"></div><figcaption>${esc(r.name)} — ${i+1}</figcaption></figure>`).join("");
+    const note=(S.notes&&S.notes[r.id])||"";
+    const refNote = S.ref && S.ref.notes ? (S.ref.notes[r.id]||"") : "";
+    const noteHtml = (note||refNote)
+      ? `<div class="rnote"><b>Observations sur la pièce</b>${
+          note?`<p>${esc(note).replace(/\n/g,"<br>")}</p>`:`<p>—</p>`}${
+          refNote?`<div class="rr">Entrée : ${esc(refNote)}</div>`:""}</div>`
+      : "";
     return `<section><h3>${esc(r.name)}</h3>
       <table><thead><tr><th>Élément</th><th>État</th><th>Observations</th></tr></thead>
       <tbody>${rows}</tbody></table>
+      ${noteHtml}
       ${ph?`<div class="gal">${ph}</div>`:""}</section>`;
   }).join("");
 
@@ -863,6 +889,11 @@ function reportHTML(){
  td.e{width:11%;font-family:ui-monospace,Menlo,monospace;font-weight:700;text-align:center}
  td.e.good{color:#2F7A57}td.e.mid{color:#B0761A}td.e.bad{color:#A93A29}
  .rr{margin-top:4px;font-size:12.5px;color:#6A6F75;border-left:3px solid #C3B490;padding-left:7px}
+ .rnote{margin:9px 0 4px;padding:9px 11px;background:#F7F6F3;
+   border-left:3px solid #1E2C3A;border-radius:0 5px 5px 0;break-inside:avoid}
+ .rnote b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+   color:#7A828A;margin-bottom:3px}
+ .rnote p{margin:0;font-size:13.5px}
  .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:6px}
  .kv div{border-bottom:1px solid #EFEDE8;padding:5px 0;font-size:13.5px}
  .kv b{color:#7A828A;font-weight:600;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;display:block}
@@ -999,7 +1030,7 @@ fileIn.addEventListener("change",async()=>{
   const wasEntree = data.type!=="sortie";
   if(wasEntree && confirm("État des lieux d'entrée chargé.\n\nCréer l'état des lieux de sortie à partir de celui-ci ?")){
     const src=normalize(data);
-    const ref={rooms:src.rooms, photos:src.photos};
+    const ref={rooms:src.rooms, photos:src.photos, notes:src.notes};
     S=blank();
     S.type="sortie";
     S.meta=Object.assign({},data.meta,{date:today()});
